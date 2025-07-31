@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-type ArrowPreferences = {
+export type ArrowPreferences = {
   // FLÈCHES
   showAttackers: boolean;       // Flèches rouges vers la pièce
   showDefenders: boolean;       // Flèches vertes vers la pièce
@@ -8,7 +8,7 @@ type ArrowPreferences = {
   showBlackControl: boolean;    // Flèches violettes de contrôle noir
 }
 
-type SquarePreferences = {
+export type SquarePreferences = {
   // COLORATION DES CASES
   showMobility: boolean;
   showCaptures: boolean;        // Cases orange pour les captures

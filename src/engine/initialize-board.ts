@@ -23,15 +23,26 @@ function createEmptySquare (rank: number, file: number): EnrichedSquare {
     square,
     rank,
     file,
-
-    // Analyse tactique
-    attackers: [],
-    defenders: [],
-    mobility: { moves: [], captures: [], checks: [], totalMobility: 0 },
-
-    // Contrôle
-    control: { white: [], black: [], dominantColor: undefined },
     evaluation: undefined,
+
+    // Contrôle de la case (toujours présent)
+    control: {
+      whiteControllers: [],
+      blackControllers: [],
+      whiteStrength: 0,
+      blackStrength: 0,
+      dominantColor: undefined,
+      controlBalance: 0,
+      isContested: false
+    },
+
+    // Mobilité (vide par défaut)
+    mobility: {
+      moves: [],
+      captures: [],
+      checks: [],
+      totalMobility: 0
+    },
 
     // Structure de pions
     pawnStructure: {
@@ -51,11 +62,20 @@ function createEmptySquare (rank: number, file: number): EnrichedSquare {
       weakness: 0
     },
 
-    // Menaces
+    // Menaces (pour compatibilité avec ancien code)
     threats: {
-      isHanging: false, isPinned: false, isFork: false,
-      isSkewer: false, threatLevel: 0
+      isHanging: false,
+      isPinned: false,
+      isFork: false,
+      isSkewer: false,
+      threatLevel: 0
     },
+
+    // Importance stratégique
+    strategic: {
+      isKey: false,
+      importance: 0
+    }
   }
 }
 

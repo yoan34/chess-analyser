@@ -1,11 +1,11 @@
 import type { Color, PieceSymbol, Square } from 'chess.js'
 
-
 export type PawnBlocked = {
   isBlocked: boolean;
   blockedBy: string | undefined;
   permanentlyBlocked: boolean;
 }
+
 export type EnrichedSquare = {
   piece: {
     type: PieceSymbol;
@@ -20,10 +20,6 @@ export type EnrichedSquare = {
   } | undefined;
 
   evaluation: undefined;
-  moveValue: {
-    white: number | undefined;
-    black: number | undefined;
-  }
 
   // ===== INFORMATIONS POSITION =====
   square: Square;
@@ -53,6 +49,29 @@ export type EnrichedSquare = {
   strategic: {
     isKey: boolean;          // Case clé (centre, avant-poste)
     importance: number;      // Score d'importance (0-10)
+  };
+
+  // ===== ANCIEN FORMAT (pour compatibilité) =====
+  // TODO: À supprimer une fois la migration terminée
+  pawnStructure: {
+    isPawn: boolean;
+    isolated: boolean;
+    doubled: boolean;
+    passed: boolean;
+    backward: boolean;
+    hanging: boolean;
+    blocked: PawnBlocked;
+    chain: boolean;
+    support: number;
+    weakness: number;
+  };
+
+  threats: {
+    isHanging: boolean;
+    isPinned: boolean;
+    isFork: boolean;
+    isSkewer: boolean;
+    threatLevel: number;
   };
 }
 

@@ -2,8 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Square } from 'chess.js'
 import type { AnalysisData } from '../engine'
 import type { SquareIndex } from './useSquareSelection'
-import type { SquarePreferences } from './useVisualizationPreferences'
-
+import { SquarePreferences } from './useVisualizationPreferences'
 type SquareStyleType = 'MOBILITY' | 'LAST_MOVE' | 'WEAK_SQUARE' | 'CHECK_SQUARE'
 
 type SquareStyle = Partial<Record<Square, {

@@ -2,31 +2,56 @@ import { Chess, BLACK, WHITE, Square, Color } from 'chess.js'
 import { initializeEmptyBoard } from './initialize-board'
 import { EnrichedBoard } from './types'
 
-
 export type AnalysisData = {
   board: EnrichedBoard;
 }
 
 export async function chessAnalyzer (fen: string): Promise<AnalysisData> {
-
   const startAnalyze = Date.now()
   const chess = new Chess(fen)
   const board = initializeEmptyBoard()
 
-  addPieceThreats(board, chess);
-  addSquareControl(board, chess);
+  // Ajouter les pièces au plateau
+  addPiecesToBoard(board, chess)
 
-  // addMobility(board)
-
+  // Analyse tactique
+  addPieceThreats(board, chess)
+  addSquareControl(board, chess)
+  addMobility(board, chess)
 
   const endAnalyze = Date.now()
   console.log(`Analyze in ${endAnalyze - startAnalyze}ms`)
-
-  return {
-    board,
-  }
+  console.log(board)
+  return { board }
 }
 
+/**
+ * Ajoute les pièces présentes sur le plateau
+ */
+function addPiecesToBoard(board: EnrichedBoard, chess: Chess) {
+  board.forEach((rank, rankIndex) => {
+    rank.forEach((square, fileIndex) => {
+      const piece = chess.get(square.square)
+      if (piece) {
+        board[rankIndex][fileIndex].piece = {
+          type: piece.type,
+          color: piece.color,
+          // Les infos tactiques seront ajoutées par addPieceThreats
+          attackedBy: [],
+          defendedBy: [],
+          exchangeValue: 0,
+          isHanging: false,
+          isPinned: false,
+          threats: []
+        }
+      }
+    })
+  })
+}
+
+/**
+ * Ajoute les informations d'attaque/défense pour les pièces présentes
+ */
 function addPieceThreats(board: EnrichedBoard, chess: Chess) {
   board.forEach((rank, rankIndex) => {
     rank.forEach((square, fileIndex) => {
@@ -71,6 +96,40 @@ function addSquareControl(board: EnrichedBoard, chess: Chess) {
   });
 }
 
+/**
+ * Ajoute les informations de mobilité pour les pièces présentes
+ */
+function addMobility(board: EnrichedBoard, chess: Chess) {
+  board.forEach((rank, rankIndex) => {
+    rank.forEach((square, fileIndex) => {
+      if (square.piece) {
+        const moves = chess.moves({ square: square.square, verbose: true });
+
+        board[rankIndex][fileIndex].mobility = {
+          moves: moves.map(move => move.to),
+          captures: moves.filter(move => move.captured).map(move => move.to),
+          checks: moves.filter(move => {
+            chess.move(move);
+            const inCheck = chess.inCheck();
+            chess.undo();
+            return inCheck;
+          }).map(move => move.to),
+          totalMobility: moves.length
+        };
+      } else {
+        // Case vide = aucune mobilité
+        board[rankIndex][fileIndex].mobility = {
+          moves: [],
+          captures: [],
+          checks: [],
+          totalMobility: 0
+        };
+      }
+    });
+  });
+}
+
+// ===== FONCTIONS UTILITAIRES =====
 
 function calculateControlStrength(controllers: Square[], chess: Chess): number {
   const pieceValues = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -81,9 +140,6 @@ function calculateControlStrength(controllers: Square[], chess: Chess): number {
   }, 0);
 }
 
-/**
- * Détermine la couleur dominante sur une case
- */
 function determineDominantColor(
   whiteControllers: Square[],
   blackControllers: Square[],
@@ -94,12 +150,9 @@ function determineDominantColor(
 
   if (whiteStrength > blackStrength) return 'w';
   if (blackStrength > whiteStrength) return 'b';
-  return undefined; // Équilibre
+  return undefined;
 }
 
-/**
- * Calcule la balance du contrôle (positif = avantage blanc)
- */
 function calculateControlBalance(
   whiteControllers: Square[],
   blackControllers: Square[],
@@ -110,9 +163,6 @@ function calculateControlBalance(
   return whiteStrength - blackStrength;
 }
 
-/**
- * Vérifie si une pièce est en prise (plus d'attaquants que de défenseurs)
- */
 function isHanging(square: Square, chess: Chess): boolean {
   const piece = chess.get(square);
   if (!piece) return false;
@@ -124,9 +174,6 @@ function isHanging(square: Square, chess: Chess): boolean {
   return attackers.length > defenders.length;
 }
 
-/**
- * Calcule la valeur nette d'un échange sur une case
- */
 function calculateExchangeValue(square: Square, chess: Chess): number {
   const piece = chess.get(square);
   if (!piece) return 0;
@@ -138,7 +185,7 @@ function calculateExchangeValue(square: Square, chess: Chess): number {
     .map(sq => chess.get(sq))
     .filter(p => p !== null)
     .map(p => pieceValues[p!.type])
-    .sort((a, b) => a - b); // Trier par valeur croissante
+    .sort((a, b) => a - b);
 
   const defenders = chess.attackers(square, piece.color)
     .map(sq => chess.get(sq))
@@ -146,19 +193,16 @@ function calculateExchangeValue(square: Square, chess: Chess): number {
     .map(p => pieceValues[p!.type])
     .sort((a, b) => a - b);
 
-  // Simulation simple d'échange
   let capturedValue = pieceValues[piece.type];
   let lostValue = 0;
   let turn = 0;
 
   while (turn < Math.max(attackers.length, defenders.length)) {
     if (turn % 2 === 0 && turn < attackers.length) {
-      // Tour de l'attaquant
       if (turn < defenders.length) {
         lostValue += attackers[turn];
       }
     } else if (turn % 2 === 1 && turn < defenders.length) {
-      // Tour du défenseur
       if (turn < attackers.length) {
         capturedValue += defenders[turn];
       }
@@ -169,14 +213,10 @@ function calculateExchangeValue(square: Square, chess: Chess): number {
   return capturedValue - lostValue;
 }
 
-/**
- * Vérifie si une pièce est clouée
- */
 function isPinned(square: Square, chess: Chess): boolean {
   const piece = chess.get(square);
   if (!piece) return false;
 
-  // Simulation : on retire la pièce et on voit si le roi est en échec
   const originalPiece = chess.remove(square);
   const kingInCheck = chess.inCheck();
   chess.put(originalPiece!, square);
@@ -184,9 +224,6 @@ function isPinned(square: Square, chess: Chess): boolean {
   return kingInCheck;
 }
 
-/**
- * Détecte les motifs tactiques
- */
 function detectTacticalThreats(square: Square, chess: Chess): string[] {
   const threats: string[] = [];
   const piece = chess.get(square);
@@ -194,8 +231,6 @@ function detectTacticalThreats(square: Square, chess: Chess): string[] {
 
   if (isPinned(square, chess)) threats.push('pinned');
   if (isHanging(square, chess)) threats.push('hanging');
-
-  // TODO: Ajouter détection fork, skewer, etc.
 
   return threats;
 }
