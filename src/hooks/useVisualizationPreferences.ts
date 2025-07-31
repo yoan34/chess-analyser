@@ -1,25 +1,34 @@
 import { useState } from 'react'
 
-export interface ArrowPreferences {
-  showAttackers: boolean
-  showDefenders: boolean
+type ArrowPreferences = {
+  // FLÈCHES
+  showAttackers: boolean;       // Flèches rouges vers la pièce
+  showDefenders: boolean;       // Flèches vertes vers la pièce
+  showWhiteControl: boolean;    // Flèches jaunes de contrôle blanc
+  showBlackControl: boolean;    // Flèches violettes de contrôle noir
 }
 
-export interface SquarePreferences {
-  showMobility: boolean
-  // Facile d'ajouter d'autres préférences ici :
-  // showWeakSquares: boolean
-  // showCheckSquares: boolean
+type SquarePreferences = {
+  // COLORATION DES CASES
+  showMobility: boolean;
+  showCaptures: boolean;        // Cases orange pour les captures
+  showThreats: boolean;         // Cases rouges pour les menaces
+  showControl: boolean;         // Gradient de couleur selon le contrôle
 }
 
 export function useVisualizationPreferences() {
   const [arrowPreferences, setArrowPreferences] = useState<ArrowPreferences>({
-    showAttackers: false,
-    showDefenders: false
+    showAttackers: false,       // Flèches rouges vers la pièce
+    showDefenders: false,       // Flèches vertes vers la pièce
+    showWhiteControl: false,    // Flèches jaunes de contrôle blanc
+    showBlackControl: false,
   })
 
   const [squarePreferences, setSquarePreferences] = useState<SquarePreferences>({
-    showMobility: false
+    showMobility: false,
+    showCaptures: false,        // Cases orange pour les captures
+    showThreats: false,         // Cases rouges pour les menaces
+    showControl: false,
   })
 
   const toggleAttackers = () => {

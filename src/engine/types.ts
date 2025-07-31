@@ -10,60 +10,50 @@ export type EnrichedSquare = {
   piece: {
     type: PieceSymbol;
     color: Color;
-  } | undefined;
-  evaluation: undefined
-
-  // ===== INFORMATIONS POSITION =====
-  square: Square;        // 'e4', 'a1', etc.
-  rank: number;         // 0-7 (0 = 8ème rangée)
-  file: number;         // 0-7 (0 = colonne a)
-
-  // ===== ANALYSE TACTIQUE =====
-  attackers: string[];
-  defenders: string[];
-  mobility: {
-    moves: string[];        // Cases accessibles depuis ici
-    captures: string[];     // Captures possibles
-    checks: string[];       // Coups donnant échec
-    totalMobility: number;  // Nombre total de coups
-  };
-
-  // ===== CONTRÔLE ET INFLUENCE =====
-  control: {
-    white: Square[];  // Force du contrôle blanc
-    black: Square[];  // Force du contrôle noir
-    dominantColor: Color | undefined;
-  };
-
-  // ===== STRUCTURE DE PIONS =====
-  pawnStructure: {
-    isPawn: boolean;
-    isolated: boolean;      // Pion isolé
-    doubled: boolean;       // Pion doublé
-    passed: boolean;        // Pion passé
-    backward: boolean;      // Pion arriéré
-    hanging: boolean;       // Pion pendant
-    chain: boolean;         // Dans une chaîne
-    support: number;        // Nombre de soutiens
-    weakness: number;       // Score de faiblesse (0-10)
-    blocked: PawnBlocked
-  };
-
-  // ===== MENACES ET TENSIONS =====
-  threats: {
+    // Infos tactiques spécifiques à cette pièce
+    attackedBy: Square[];      // Pièces ennemies qui attaquent cette pièce
+    defendedBy: Square[];      // Pièces alliées qui défendent cette pièce
+    exchangeValue: number;     // Valeur nette si échange sur cette case
     isHanging: boolean;        // Pièce en prise
     isPinned: boolean;         // Pièce clouée
-    isFork: boolean;          // Dans une fourchette
-    isSkewer: boolean;        // Dans un enfilage
-    threatLevel: number;      // Niveau de menace (0-10)
+    threats: string[];         // Menaces tactiques spécifiques (fork, skewer, etc.)
+  } | undefined;
+
+  evaluation: undefined;
+  moveValue: {
+    white: number | undefined;
+    black: number | undefined;
   }
+
+  // ===== INFORMATIONS POSITION =====
+  square: Square;
+  rank: number;
+  file: number;
+
+  // ===== CONTRÔLE DE LA CASE (indépendant de la pièce présente) =====
+  control: {
+    whiteControllers: Square[];    // Pièces blanches qui "voient" cette case
+    blackControllers: Square[];    // Pièces noires qui "voient" cette case
+    whiteStrength: number;         // Force du contrôle blanc
+    blackStrength: number;         // Force du contrôle noir
+    dominantColor: Color | undefined;
+    controlBalance: number;        // > 0 = avantage blanc, < 0 = noir
+    isContested: boolean;          // Case disputée par les deux camps
+  };
+
+  // ===== MOBILITÉ (depuis cette case si pièce présente) =====
+  mobility: {
+    moves: Square[];         // Cases accessibles
+    captures: Square[];      // Captures possibles
+    checks: Square[];        // Coups donnant échec
+    totalMobility: number;
+  };
+
+  // ===== IMPORTANCE STRATÉGIQUE =====
+  strategic: {
+    isKey: boolean;          // Case clé (centre, avant-poste)
+    importance: number;      // Score d'importance (0-10)
+  };
 }
 
 export type EnrichedBoard = EnrichedSquare[][];
-
-export type Mobility = {
-  moves: string[];
-  captures: string[];
-  checks: string[];
-  totalMobility: number;
-};
